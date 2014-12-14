@@ -30,6 +30,17 @@ test("changes to attributes can be rolled back", function() {
   equal(person.get('isDirty'), false);
 });
 
+test("changes to non-present attributes can be rolled back", function() {
+  var person;
+  run(function(){
+    person = store.push('person', { id: 1, firstName: "Tom" });
+    person.set('lastName', 'Dale');
+    equal(person.get('lastName'), 'Dale');
+    person.rollback();
+    equal(person.get('lastName'), undefined);
+  });
+});
+
 test("changes to attributes made after a record is in-flight only rolls back the local changes", function() {
   env.adapter.updateRecord = function(store, type, record) {
     // Make sure the save is async

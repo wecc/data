@@ -204,6 +204,18 @@ Model.reopenClass({
 Model.reopen({
   eachAttribute: function(callback, binding) {
     this.constructor.eachAttribute(callback, binding);
+  },
+
+  notifyChangedAttributes: function() {
+    Ember.beginPropertyChanges();
+    this.eachAttribute(function(name, meta) {
+      var value = getValue(this, name);
+      var cached = this.get(name);
+      if (value !== cached) {
+        this.notifyPropertyChange(name);
+      }
+    }, this);
+    Ember.endPropertyChanges();
   }
 });
 

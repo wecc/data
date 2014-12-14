@@ -4,7 +4,8 @@ var run = Ember.run;
 module("integration/records/save - Save Record", {
   setup: function() {
     Post = DS.Model.extend({
-      title: DS.attr('string')
+      title: DS.attr('string'),
+      author: DS.attr('string')
     });
 
     Post.toString = function() { return "Post"; };
@@ -114,6 +115,24 @@ test("Will reject save on invalid", function() {
   run(function(){
     post.save().then(function() {}, function() {
       ok(true, 'save operation was rejected');
+    });
+  });
+});
+
+test("Will merge properties on successful save", function() {
+  expect(1);
+  var post;
+  run(function(){
+    post = env.store.createRecord('post', { title: 'toto' });
+  });
+
+  env.adapter.createRecord = function(store, type, record) {
+    return Ember.RSVP.resolve({ id: '123', author: 'Tomster' });
+  };
+
+  run(function(){
+    post.save().then(function() {
+      deepEqual(post.getProperties('id', 'author', 'title'), { id: '123', author: 'Tomster', title: 'toto' });
     });
   });
 });

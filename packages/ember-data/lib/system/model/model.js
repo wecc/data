@@ -759,20 +759,6 @@ var Model = Ember.Object.extend(Ember.Evented, {
   },
 
   /**
-    @method _notifyProperties
-    @private
-  */
-  _notifyProperties: function(keys) {
-    Ember.beginPropertyChanges();
-    var key;
-    for (var i = 0, length = keys.length; i < length; i++){
-      key = keys[i];
-      this.notifyPropertyChange(key);
-    }
-    Ember.endPropertyChanges();
-  },
-
-  /**
     Returns an object, whose keys are changed properties, and value is
     an [oldProp, newProp] array.
 
@@ -824,20 +810,17 @@ var Model = Ember.Object.extend(Ember.Evented, {
   adapterDidCommit: function(data) {
     set(this, 'isError', false);
 
-    if (data) {
-      this._data = data;
-    } else {
-      merge(this._data, this._inFlightAttributes);
-    }
-
+    merge(this._data, this._inFlightAttributes);
     this._inFlightAttributes = Ember.create(null);
+
+    if (data) {
+      merge(this._data, data);
+    }
 
     this.send('didCommit');
     this.updateRecordArraysLater();
 
-    if (!data) { return; }
-
-    this._notifyProperties(Ember.keys(data));
+    this.notifyChangedAttributes();
   },
 
   /**
@@ -874,7 +857,7 @@ var Model = Ember.Object.extend(Ember.Evented, {
 
     this.pushedData();
 
-    this._notifyProperties(Ember.keys(data));
+    this.notifyChangedAttributes();
   },
 
   materializeId: function(id) {
@@ -931,8 +914,7 @@ var Model = Ember.Object.extend(Ember.Evented, {
 
     this.send('rolledBack');
 
-    this._notifyProperties(Ember.keys(this._data));
-
+    this.notifyChangedAttributes();
   },
 
   toStringExtension: function() {

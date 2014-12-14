@@ -7,6 +7,7 @@ module("unit/store/push - DS.Store#push", {
     Person = DS.Model.extend({
       firstName: attr('string'),
       lastName: attr('string'),
+      email: attr('string'),
       phoneNumbers: hasMany('phone-number')
     });
     Person.toString = function() {
@@ -153,7 +154,7 @@ test("Calling push on normalize allows partial updates with raw JSON", function 
   equal(person.get('lastName'), "Jackson", "existing fields are untouched");
 });
 
-test("Calling push with partial records triggers observers for just those attributes", function() {
+test("Calling push with partial records triggers observers for the changed attributes only", function() {
   expect(1);
   var person;
 
@@ -161,7 +162,8 @@ test("Calling push with partial records triggers observers for just those attrib
     person = store.push('person', {
       id: 'wat',
       firstName: "Yehuda",
-      lastName: "Katz"
+      lastName: "Katz",
+      email: "yehuda@emberjs.com"
     });
   });
 
@@ -173,10 +175,15 @@ test("Calling push with partial records triggers observers for just those attrib
     ok(true, 'lastName observer should be triggered');
   });
 
+  person.addObserver('email', function() {
+    ok(false, 'email observer should not triggered');
+  });
+
   run(function(){
     store.push('person', {
       id: 'wat',
-      lastName: "Katz!"
+      lastName: "Katz!",
+      email: "yehuda@emberjs.com" // Not changed
     });
   });
 });
