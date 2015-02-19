@@ -1,5 +1,5 @@
-import {JSONSerializer, RESTSerializer} from "ember-data/serializers";
-import {RESTAdapter} from "ember-data/adapters";
+import { JSONSerializer, JSONAPISerializer, RESTSerializer } from "ember-data/serializers";
+import { JSONAPIAdapter, RESTAdapter } from "ember-data/adapters";
 import ContainerProxy from "ember-data/system/container-proxy";
 import Store from "ember-data/system/store";
 
@@ -31,7 +31,9 @@ export default function initializeStore(registry, application) {
 
   // new go forward paths
   registry.register('serializer:-default', JSONSerializer);
+  registry.register('serializer:-json-api', JSONAPISerializer);
   registry.register('serializer:-rest', RESTSerializer);
+  registry.register('adapter:-json-api', JSONAPIAdapter);
   registry.register('adapter:-rest', RESTAdapter);
 
   // Eagerly generate the store so defaultStore is populated.

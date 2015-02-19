@@ -82,12 +82,15 @@
     registry.optionsForType('adapter', { singleton: false });
 
     registry.register('serializer:-default', DS.JSONSerializer);
+    registry.register('serializer:-json-api', DS.JSONAPISerializer);
     registry.register('serializer:-rest', DS.RESTSerializer);
+    registry.register('adapter:-json-api', DS.JSONAPIAdapter);
     registry.register('adapter:-rest', DS.RESTAdapter);
 
     registry.injection('serializer', 'store', 'store:main');
 
     env.serializer = container.lookup('serializer:-default');
+    env.jsonApiSerializer = container.lookup('serializer:-json-api');
     env.restSerializer = container.lookup('serializer:-rest');
     env.store = container.lookup('store:main');
     env.adapter = env.store.get('defaultAdapter');
@@ -118,11 +121,11 @@
     };
 
     // Prevent all tests involving serialization to require a container
-    DS.JSONSerializer.reopen({
-      transformFor: function(attributeType) {
-        return this._super(attributeType, true) || transforms[attributeType];
-      }
-    });
+    var transformFor = function(attributeType) {
+      return this._super(attributeType, true) || transforms[attributeType];
+    };
+    DS.JSONSerializer.reopen({ transformFor: transformFor });
+    DS.JSONAPISerializer.reopen({ transformFor: transformFor });
 
   });
 
