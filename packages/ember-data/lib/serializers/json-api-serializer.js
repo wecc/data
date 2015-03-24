@@ -39,11 +39,12 @@ export default Serializer.extend({
 
     var dataType = Ember.typeOf(payload.data);
 
-    if (dataType === 'object') {
-      return this.extractSingle(store, payload, id);
-    } else if (dataType === 'array') {
-      store.setMetadataFor(type, payload.meta || {});
-      return this.extractArray(store, payload);
+    switch (dataType) {
+      case 'object':
+        return this.extractSingle(store, payload, id);
+      case 'array':
+        store.setMetadataFor(type, payload.meta || {});
+        return this.extractArray(store, payload);
     }
   },
 
@@ -121,10 +122,13 @@ export default Serializer.extend({
     }, this);
 
     snapshot.eachRelationship(function(key, relationship) {
-      if (relationship.kind === 'belongsTo') {
-        this.serializeBelongsTo(snapshot, json, relationship);
-      } else if (relationship.kind === 'hasMany') {
-        this.serializeHasMany(snapshot, json, relationship);
+      switch (relationship.kind) {
+        case 'belongsTo':
+          this.serializeBelongsTo(snapshot, json, relationship);
+          break;
+        case 'hasMany':
+          this.serializeHasMany(snapshot, json, relationship);
+          break;
       }
     }, this);
 
@@ -153,15 +157,16 @@ export default Serializer.extend({
     var links = json['links'] = json['links'] || {};
 
     var payloadKey = this.keyForRelationship(key, 'belongsTo');
+    var linkage = null;
 
-    if (Ember.isNone(belongsTo)) {
-      links[payloadKey] = { id: null };
-    } else {
-      links[payloadKey] = {
+    if (!Ember.isNone(belongsTo)) {
+      linkage = {
         type: this.serializeTypeKey(belongsTo.typeKey),
         id: belongsTo.id
       };
     }
+
+    links[payloadKey] = { linkage: linkage };
   },
 
   serializeHasMany: function(snapshot, json, relationship) {
@@ -171,23 +176,16 @@ export default Serializer.extend({
     var links = json['links'] = json['links'] || {};
 
     var payloadKey = this.keyForRelationship(key, 'hasMany');
+    var linkage = [];
 
-    if (hasMany.length === 0) {
-      links[payloadKey] = { ids: [] };
-    } else {
-
-      // TODO: if all items in hasMany is of the same type, provide
-      // { type: "type", ids: [..] } instead of { data: [...] }
-
-      var data = [];
-      for (var i = 0; i < hasMany.length; i++) {
-        data.push({
-          type: this.serializeTypeKey(hasMany[i].typeKey),
-          id: hasMany[i].id
-        });
-      }
-      links[payloadKey] = { data: data };
+    for (var i = 0; i < hasMany.length; i++) {
+      linkage.push({
+        type: this.serializeTypeKey(hasMany[i].typeKey),
+        id: hasMany[i].id
+      });
     }
+
+    links[payloadKey] = { linkage: linkage };
   },
 
 
@@ -197,7 +195,6 @@ export default Serializer.extend({
 
     this.normalizeAttributes(type, hash);
     this.normalizeRelationships(type, hash);
-    this.normalizeLinks(hash);
     this.applyTransforms(type, hash);
 
     return hash;
@@ -227,60 +224,58 @@ export default Serializer.extend({
 
       if (hash.links[payloadKey]) {
         link = hash.links[payloadKey];
+        delete hash.links[payloadKey];
 
-        if (relationship.kind === 'belongsTo' && link.id) {
-
-          hash[key] = { id: link.id, type: this.normalizeTypeKey(link.type) };
-          delete hash.links[payloadKey];
-
-        } else if (relationship.kind === 'hasMany') {
-
-          if (link.ids) {
-
-            hash[key] = map.call(link.ids, function(id) {
-              return { id: id, type: this.normalizeTypeKey(link.type) };
-            }, this);
-            delete hash.links[payloadKey];
-
-          } else if (link.data) {
-
-            hash[key] = map.call(link.data, function(item) {
-              return { id: item.id, type: this.normalizeTypeKey(item.type) };
-            }, this);
-            delete hash.links[payloadKey];
-
+        if (link.linkage) {
+          switch (relationship.kind) {
+            case 'belongsTo':
+              this.normalizeBelongsTo(hash, key, link);
+              break;
+            case 'hasMany':
+              this.normalizeHasMany(hash, key, link);
+              break;
           }
+        } else {
+          this.normalizeLink(hash, key, link);
         }
       }
     }, this);
   },
 
-  normalizeLinks: function(hash) {
-    var links = hash.links;
-
-    if (!links) { return; }
-
-    for (var key in links) {
-      links[key] = this.normalizeLink(links[key]);
+  normalizeBelongsTo: function(hash, key, link) {
+    var linkage = link.linkage;
+    if (linkage) {
+      hash[key] = {
+        type: this.normalizeTypeKey(linkage.type),
+        id: linkage.id
+      };
     }
   },
 
-  normalizeLink: function(link) {
-    var normalizedLink = {};
+  normalizeHasMany: function(hash, key, link) {
+    var linkage = link.linkage;
+    if (linkage) {
+      hash[key] = map.call(linkage, function(item) {
+        return {
+          type: this.normalizeTypeKey(item.type),
+          id: item.id
+        };
+      }, this);
+    }
+  },
 
+  normalizeLink: function(hash, key, link) {
     if (Ember.typeOf(link) === 'string') {
-      normalizedLink = {
+      hash.links[key] = {
         self: null,
-        resource: link
+        related: link
       };
     } else {
-      normalizedLink = {
+      hash.links[key] = {
         self: link.self || null,
-        resource: link.resource || null
+        related: link.related || null
       };
     }
-
-    return normalizedLink;
   },
 
   applyTransforms: function(type, hash) {

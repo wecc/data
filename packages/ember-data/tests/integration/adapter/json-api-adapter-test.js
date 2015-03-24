@@ -123,22 +123,22 @@ test('find all records with sideloaded relationships', function() {
       title: "Ember.js rocks",
       links: {
         author: {
-          type: "user",
-          id: "3"
+          linkage: { type: "user", id: "3" }
         }
       }
     }, {
       type: "post",
       id: "2",
-      title: "Tompster rules",
+      title: "Tomster rules",
       links: {
         author: {
-          type: "user",
-          id: "3"
+          linkage: { type: "user", id: "3" }
         },
         comments: {
-          type: "comment",
-          ids: ["4", "5"]
+          linkage: [
+            { type: "comment", id: "4" },
+            { type: "comment", id: "5" }
+          ]
         }
       }
     }],
@@ -164,7 +164,7 @@ test('find all records with sideloaded relationships', function() {
 
       equal(posts.get('length'), '2');
       equal(posts.get('firstObject.title'), 'Ember.js rocks');
-      equal(posts.get('lastObject.title'), 'Tompster rules');
+      equal(posts.get('lastObject.title'), 'Tomster rules');
 
       equal(posts.get('firstObject.author.firstName'), 'Yehuda');
       equal(posts.get('lastObject.author.lastName'), 'Katz');
@@ -239,7 +239,7 @@ test('find a single record with belongsTo link as string', function() {
   });
 });
 
-test('find a single record with belongsTo link as object { resource }', function() {
+test('find a single record with belongsTo link as object { related }', function() {
   expect(7);
 
   ajaxResponse([{
@@ -249,7 +249,7 @@ test('find a single record with belongsTo link as object { resource }', function
       title: "Ember.js rocks",
       links: {
         author: {
-          resource: "http://example.com/user/2"
+          related: "http://example.com/user/2"
         }
       }
     }
@@ -280,7 +280,7 @@ test('find a single record with belongsTo link as object { resource }', function
   });
 });
 
-test('find a single record with belongsTo link as object { type, id }', function() {
+test('find a single record with belongsTo link as object { linkage }', function() {
   expect(7);
 
   ajaxResponse([{
@@ -290,8 +290,7 @@ test('find a single record with belongsTo link as object { type, id }', function
       title: "Ember.js rocks",
       links: {
         author: {
-          type: "user",
-          id: "2"
+          linkage: { type: "user", id: "2" }
         }
       }
     }
@@ -322,7 +321,7 @@ test('find a single record with belongsTo link as object { type, id }', function
   });
 });
 
-test('find a single record with belongsTo link as object { type, id } (polymorphic)', function() {
+test('find a single record with belongsTo link as object { linkage } (polymorphic)', function() {
   expect(8);
 
   ajaxResponse([{
@@ -333,8 +332,7 @@ test('find a single record with belongsTo link as object { type, id } (polymorph
       'last-name': "Katz",
       links: {
         company: {
-          type: "development-shop",
-          id: "2"
+          linkage: { type: "development-shop", id: "2" }
         }
       }
     }
@@ -366,7 +364,7 @@ test('find a single record with belongsTo link as object { type, id } (polymorph
   });
 });
 
-test('find a single record with sideloaded belongsTo link as object { type, id }', function() {
+test('find a single record with sideloaded belongsTo link as object { linkage }', function() {
   expect(7);
 
   ajaxResponse([{
@@ -376,8 +374,7 @@ test('find a single record with sideloaded belongsTo link as object { type, id }
       title: "Ember.js rocks",
       links: {
         author: {
-          type: "user",
-          id: "2"
+          linkage: { type: "user", id: "2" }
         }
       }
     },
@@ -450,7 +447,51 @@ test('find a single record with hasMany link as string', function() {
   });
 });
 
-test('find a single record with hasMany link as object { type, ids }', function() {
+test('find a single record with hasMany link as object { related }', function() {
+  expect(7);
+
+  ajaxResponse([{
+    data: {
+      type: "post",
+      id: "1",
+      title: "Ember.js rocks",
+      links: {
+        comments: {
+          related: "http://example.com/post/1/comments"
+        }
+      }
+    }
+  }, {
+    data: [{
+      type: "comment",
+      id: "2",
+      text: "This is the first comment"
+    }, {
+      type: "comment",
+      id: "3",
+      text: "This is the second comment"
+    }]
+  }]);
+
+  run(function() {
+    store.find('post', 1).then(function(post) {
+      equal(passedUrl[0], '/post/1');
+
+      equal(post.get('id'), '1');
+      equal(post.get('title'), 'Ember.js rocks');
+
+      post.get('comments').then(function(comments) {
+        equal(passedUrl[1], 'http://example.com/post/1/comments');
+
+        equal(comments.get('length'), 2);
+        equal(comments.get('firstObject.text'), 'This is the first comment');
+        equal(comments.get('lastObject.text'), 'This is the second comment');
+      });
+    });
+  });
+});
+
+test('find a single record with hasMany link as object { linkage }', function() {
   expect(8);
 
   ajaxResponse([{
@@ -460,8 +501,10 @@ test('find a single record with hasMany link as object { type, ids }', function(
       title: "Ember.js rocks",
       links: {
         comments: {
-          type: "comment",
-          ids: ["2", "3"]
+          linkage: [
+            { type: "comment", id: "2" },
+            { type: "comment", id: "3" }
+          ]
         }
       }
     }
@@ -498,7 +541,7 @@ test('find a single record with hasMany link as object { type, ids }', function(
   });
 });
 
-test('find a single record with hasMany link as object { data }  (polymorphic)', function() {
+test('find a single record with hasMany link as object { linkage }  (polymorphic)', function() {
   expect(9);
 
   ajaxResponse([{
@@ -509,13 +552,10 @@ test('find a single record with hasMany link as object { data }  (polymorphic)',
       'last-name': "Katz",
       links: {
         handles: {
-          data: [{
-            "type": "github-handle",
-            "id": "2"
-          }, {
-            "type": "twitter-handle",
-            "id": "3"
-          }]
+          linkage: [
+            { type: "github-handle", id: "2" },
+            { type: "twitter-handle", id: "3" }
+          ]
         }
       }
     }
@@ -553,7 +593,7 @@ test('find a single record with hasMany link as object { data }  (polymorphic)',
   });
 });
 
-test('find a single record with sideloaded hasMany link as object { type, ids }', function() {
+test('find a single record with sideloaded hasMany link as object { linkage }', function() {
   expect(7);
 
   ajaxResponse([{
@@ -563,8 +603,10 @@ test('find a single record with sideloaded hasMany link as object { type, ids }'
       title: "Ember.js rocks",
       links: {
         comments: {
-          type: "comment",
-          ids: ["2", "3"]
+          linkage: [
+            { type: "comment", id: "2" },
+            { type: "comment", id: "3" }
+          ]
         }
       }
     },
@@ -597,7 +639,7 @@ test('find a single record with sideloaded hasMany link as object { type, ids }'
   });
 });
 
-test('find a single record with sideloaded hasMany link as object { data } (polymorphic)', function() {
+test('find a single record with sideloaded hasMany link as object { linkage } (polymorphic)', function() {
   expect(8);
 
   ajaxResponse([{
@@ -608,13 +650,10 @@ test('find a single record with sideloaded hasMany link as object { data } (poly
       'last-name': "Katz",
       links: {
         handles: {
-          data: [{
-            "type": "github-handle",
-            "id": "2"
-          }, {
-            "type": "twitter-handle",
-            "id": "3"
-          }]
+          linkage: [
+            { type: "github-handle", id: "2" },
+            { type: "twitter-handle", id: "3" }
+          ]
         }
       }
     },
@@ -693,9 +732,11 @@ test('create record', function() {
               type: "post",
               title: "Ember.js rocks",
               links: {
-                author: { type: "user", id: "1" },
+                author: {
+                  linkage: { type: "user", id: "1" }
+                },
                 comments: {
-                  data: [
+                  linkage: [
                     { type: "comment", id: "2" },
                     { type: "comment", id: "3" }
                   ]
@@ -750,7 +791,7 @@ test('update record', function() {
 
       post.save().then(function() {
         equal(passedUrl[0], '/post/4');
-        equal(passedVerb[0], 'PUT');
+        equal(passedVerb[0], 'PATCH');
         deepEqual(passedHash[0], {
           data: {
             data : {
@@ -758,9 +799,11 @@ test('update record', function() {
               id: "4",
               title: "Ember.js rocks",
               links: {
-                author: { type: "user", id: "1" },
+                author: {
+                  linkage: { type: "user", id: "1" }
+                },
                 comments: {
-                  data: [
+                  linkage: [
                     { type: "comment", id: "2" },
                     { type: "comment", id: "3" }
                   ]

@@ -33,48 +33,48 @@ export default Adapter.extend(BuildURLMixin, {
     @type {String}
   */
 
-  find: function(store, type, id, record) {
-    return this.ajax(this.buildURL(type.typeKey, id, record), 'GET');
+  find: function(store, type, id, snapshot) {
+    return this.ajax(this.buildURL(type.typeKey, id, snapshot, 'find'), 'GET');
   },
 
   findAll: function(store, type) {
-    return this.ajax(this.buildURL(type.typeKey), 'GET');
+    return this.ajax(this.buildURL(type.typeKey, null, null, 'findAll'), 'GET');
   },
 
-  findMany: function(store, type, ids, records) {
+  findMany: function(store, type, ids, snapshots) {
     var data = {
       filter: {
         id: ids.join(',')
       }
     };
-    return this.ajax(this.buildURL(type.typeKey, ids, records), 'GET', { data: data });
+    return this.ajax(this.buildURL(type.typeKey, ids, snapshots, 'findMany'), 'GET', { data: data });
   },
 
   findQuery: function(store, type, query) {
-    return this.ajax(this.buildURL(type.typeKey), 'GET', { data: query });
+    return this.ajax(this.buildURL(type.typeKey, query, null, 'findQuery'), 'GET', { data: query });
   },
 
 
 
-  findBelongsTo: function(store, record, link, relationship) {
+  findBelongsTo: function(store, snapshot, link, relationship) {
     var url, id, type;
 
-    if (link.resource) {
-      url = link.resource;
+    if (link.related) {
+      url = link.related;
     } else {
-      id = get(record, 'id');
-      type = record.constructor.typeKey;
-      url = this.buildURL(type, id);
+      id = snapshot.id;
+      type = snapshot.typeKey;
+      url = this.buildURL(type, id, null, 'findBelongsTo');
     }
 
     return this.ajax(url, 'GET');
   },
 
-  findHasMany: function(store, record, link, relationship) {
+  findHasMany: function(store, snapshot, link, relationship) {
     var url; //, id, type, host;
 
-    if (link.resource) {
-      url = link.resource;
+    if (link.related) {
+      url = link.related;
     } else {
       // TODO
       return;
@@ -85,30 +85,26 @@ export default Adapter.extend(BuildURLMixin, {
 
 
 
-  createRecord: function(store, type, record) {
+  createRecord: function(store, type, snapshot) {
     var serializer = store.serializerFor(type.typeKey);
-
-    var snapshot = record._createSnapshot();
     var data = serializer.serialize(snapshot);
 
-    return this.ajax(this.buildURL(type.typeKey, null, record), "POST", { data: data });
+    return this.ajax(this.buildURL(type.typeKey, null, snapshot, 'createRecord'), 'POST', { data: data });
   },
 
-  updateRecord: function(store, type, record) {
+  updateRecord: function(store, type, snapshot) {
     var serializer = store.serializerFor(type.typeKey);
-
-    var snapshot = record._createSnapshot();
     var data = serializer.serialize(snapshot, { includeId: true });
 
-    var id = get(record, 'id');
+    var id = snapshot.id;
 
-    return this.ajax(this.buildURL(type.typeKey, id, record), "PUT", { data: data });
+    return this.ajax(this.buildURL(type.typeKey, id, snapshot, 'updateRecord'), 'PATCH', { data: data });
   },
 
-  deleteRecord: function(store, type, record) {
-    var id = get(record, 'id');
+  deleteRecord: function(store, type, snapshot) {
+    var id = snapshot.id;
 
-    return this.ajax(this.buildURL(type.typeKey, id, record), "DELETE");
+    return this.ajax(this.buildURL(type.typeKey, id, snapshot, 'deleteRecord'), 'DELETE');
   },
 
 
