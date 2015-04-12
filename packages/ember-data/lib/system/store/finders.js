@@ -15,7 +15,6 @@ var forEach = Ember.EnumerableUtils.forEach;
 var map = Ember.EnumerableUtils.map;
 
 function normalizeSerializerPayload(store, typeClass, payload) {
-  console.log(typeClass.typeKey);
   var normalizedPayload = {
     meta: {},
     included: []

@@ -79,8 +79,6 @@ test("Calling Store#findById multiple times coalesces the calls into a adapter#f
   });
 
   var currentType = DS.Model.extend();
-  currentType.typeKey = "test";
-
   var currentStore = createStore({ adapter: adapter, test: currentType });
 
   stop();
