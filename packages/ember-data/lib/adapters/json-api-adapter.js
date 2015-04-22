@@ -10,7 +10,6 @@ import {
 import BuildURLMixin from "ember-data/adapters/build-url-mixin";
 
 var get = Ember.get;
-var forEach = Ember.ArrayPolyfills.forEach;
 
 /**
   @class JSONAPIAdapter

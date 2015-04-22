@@ -107,6 +107,12 @@ export default Serializer.extend({
   },
 
 
+  extractErrors: function(store, type, payload, id) {
+    if (!payload.errors) { return payload; }
+
+    return payload.errors;
+  },
+
 
   serialize: function(snapshot, options) {
     var json = {};
