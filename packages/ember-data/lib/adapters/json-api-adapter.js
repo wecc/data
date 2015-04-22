@@ -141,18 +141,14 @@ export default Adapter.extend(BuildURLMixin, {
     hash.context = this;
 
     if (hash.data && type !== 'GET') {
-      hash.contentType = 'application/json; charset=utf-8';
+      hash.contentType = 'application/vnd.api+json; charset=utf-8';
       hash.data = JSON.stringify(hash.data);
     }
 
-    var headers = get(this, 'headers');
-    if (headers !== undefined) {
-      hash.beforeSend = function (xhr) {
-        forEach.call(Ember.keys(headers), function(key) {
-          xhr.setRequestHeader(key, headers[key]);
-        });
-      };
-    }
+    var defaultHeaders = {
+      Accept: 'application/vnd.api+json; charset=utf-8'
+    };
+    hash.headers = Ember.merge(defaultHeaders, get(this, 'headers'));
 
     return hash;
   },
