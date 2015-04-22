@@ -57,11 +57,11 @@ module('integration/adapter/json-api-adapter - JSONAPIAdapter', {
       post: Post,
       comment: Comment,
       handle: Handle,
-      githubHandle: GithubHandle,
-      twitterHandle: TwitterHandle,
+      'github-handle': GithubHandle,
+      'twitter-handle': TwitterHandle,
       company: Company,
-      developmentShop: DevelopmentShop,
-      designStudio: DesignStudio
+      'development-shop': DevelopmentShop,
+      'design-studio': DesignStudio
     });
 
     store = env.store;
@@ -230,6 +230,48 @@ test('find a single record with belongsTo link as string', function() {
 
       post.get('author').then(function(author) {
         equal(passedUrl[1], 'http://example.com/post/1/author');
+
+        equal(author.get('id'), '2');
+        equal(author.get('firstName'), 'Yehuda');
+        equal(author.get('lastName'), 'Katz');
+      });
+    });
+  });
+});
+
+test('find a single record with belongsTo link as object { self }', function() {
+  expect(7);
+
+  ajaxResponse([{
+    data: {
+      type: "post",
+      id: "1",
+      title: "Ember.js rocks",
+      author: "2",
+      links: {
+        author: {
+          self: "dummy"
+        }
+      }
+    }
+  }, {
+    data: {
+      type: "user",
+      id: "2",
+      'first-name': 'Yehuda',
+      'last-name': 'Katz'
+    }
+  }]);
+
+  run(function() {
+    store.find('post', 1).then(function(post) {
+      equal(passedUrl[0], '/post/1');
+
+      equal(post.get('id'), '1');
+      equal(post.get('title'), 'Ember.js rocks');
+
+      post.get('author').then(function(author) {
+        equal(passedUrl[1], '/post/1/author');
 
         equal(author.get('id'), '2');
         equal(author.get('firstName'), 'Yehuda');
@@ -438,6 +480,50 @@ test('find a single record with hasMany link as string', function() {
 
       post.get('comments').then(function(comments) {
         equal(passedUrl[1], 'http://example.com/post/1/comments');
+
+        equal(comments.get('length'), 2);
+        equal(comments.get('firstObject.text'), 'This is the first comment');
+        equal(comments.get('lastObject.text'), 'This is the second comment');
+      });
+    });
+  });
+});
+
+test('find a single record with hasMany link as object { self }', function() {
+  expect(7);
+
+  ajaxResponse([{
+    data: {
+      type: "post",
+      id: "1",
+      title: "Ember.js rocks",
+      links: {
+        comments: {
+          self: "dummy"
+        }
+      }
+    }
+  }, {
+    data: [{
+      type: "comment",
+      id: "2",
+      text: "This is the first comment"
+    }, {
+      type: "comment",
+      id: "3",
+      text: "This is the second comment"
+    }]
+  }]);
+
+  run(function() {
+    store.find('post', 1).then(function(post) {
+      equal(passedUrl[0], '/post/1');
+
+      equal(post.get('id'), '1');
+      equal(post.get('title'), 'Ember.js rocks');
+
+      post.get('comments').then(function(comments) {
+        equal(passedUrl[1], '/post/1/comments');
 
         equal(comments.get('length'), 2);
         equal(comments.get('firstObject.text'), 'This is the first comment');

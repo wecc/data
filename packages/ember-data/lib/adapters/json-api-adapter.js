@@ -57,28 +57,25 @@ export default Adapter.extend(BuildURLMixin, {
 
 
   findBelongsTo: function(store, snapshot, link, relationship) {
-    var url, id, type;
-
-    if (link.related) {
-      url = link.related;
-    } else {
-      id = snapshot.id;
-      type = snapshot.typeKey;
-      url = this.buildURL(type, id, null, 'findBelongsTo');
-    }
-
-    return this.ajax(url, 'GET');
+    return this._findRelationship(store, snapshot, link, relationship, 'findBelongsTo');
   },
 
   findHasMany: function(store, snapshot, link, relationship) {
-    var url; //, id, type, host;
+    return this._findRelationship(store, snapshot, link, relationship, 'findHasMany');
+  },
+
+  _findRelationship: function(store, snapshot, link, relationship, requestType) {
+    var url;
+    var type = snapshot.typeKey;
+    var id = snapshot.id;
 
     if (link.related) {
       url = link.related;
     } else {
-      // TODO
-      return;
+      url = Ember.String.dasherize(relationship.key);
     }
+
+    url = this.urlPrefix(url, this.buildURL(type, id, null, requestType));
 
     return this.ajax(url, 'GET');
   },
