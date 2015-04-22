@@ -53,8 +53,6 @@ export default Adapter.extend(BuildURLMixin, {
     return this.ajax(this.buildURL(type.typeKey, query, null, 'findQuery'), 'GET', { data: query });
   },
 
-
-
   findBelongsTo: function(store, snapshot, link, relationship) {
     return this._findRelationship(store, snapshot, link, relationship, 'findBelongsTo');
   },
@@ -71,14 +69,13 @@ export default Adapter.extend(BuildURLMixin, {
     if (link.related) {
       url = link.related;
     } else {
-      url = Ember.String.dasherize(relationship.key);
+      url = this.pathForRelationship(snapshot, relationship);
     }
 
     url = this.urlPrefix(url, this.buildURL(type, id, null, requestType));
 
     return this.ajax(url, 'GET');
   },
-
 
 
   createRecord: function(store, type, snapshot) {
@@ -106,6 +103,10 @@ export default Adapter.extend(BuildURLMixin, {
 
   pathForType: function(typeKey) {
     return Ember.String.dasherize(typeKey);
+  },
+
+  pathForRelationship: function(snapshot, relationship) {
+    return Ember.String.dasherize(relationship.key);
   },
 
 
