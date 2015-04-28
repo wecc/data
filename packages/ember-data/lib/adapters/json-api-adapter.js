@@ -106,7 +106,7 @@ export default Adapter.extend(BuildURLMixin, {
 
 
   pathForType: function(typeKey) {
-    return Ember.String.dasherize(typeKey);
+    return Ember.String.pluralize(Ember.String.dasherize(typeKey));
   },
 
   pathForRelationship: function(snapshot, relationship) {
