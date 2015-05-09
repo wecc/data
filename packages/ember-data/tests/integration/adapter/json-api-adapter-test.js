@@ -1,3 +1,4 @@
+/* global mockSerializerTransformFor */
 var env, store, adapter;
 var run = Ember.run;
 var passedUrl, passedVerb, passedHash;
@@ -52,6 +53,9 @@ module('integration/adapter/json-api-adapter - JSONAPIAdapter', {
 
     env = setupStore({
       adapter: DS.JSONAPIAdapter,
+      jsonApiSerializer: DS.JSONAPISerializer.extend({
+        transformFor: mockSerializerTransformFor()
+      }),
 
       user: User,
       post: Post,
