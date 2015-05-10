@@ -46,6 +46,20 @@
     setTimeout(async(callback, timeout+100), timeout);
   };
 
+  // Prevent all tests involving serialization to require a container
+  window.mockSerializerTransformFor = function mockTransformFor() {
+    var transforms = {
+      'boolean': DS.BooleanTransform.create(),
+      'date': DS.DateTransform.create(),
+      'number': DS.NumberTransform.create(),
+      'string': DS.StringTransform.create()
+    };
+
+    return function transformFor(attributeType) {
+      return this._super(attributeType, true) || transforms[attributeType];
+    };
+  };
+
   window.setupStore = function(options) {
     var container, registry;
     var env = {};
@@ -70,6 +84,9 @@
     var adapter = env.adapter = (options.adapter || DS.Adapter);
     delete options.adapter;
 
+    var jsonApiSerializer = (options.jsonApiSerializer || DS.JSONAPISerializer);
+    delete options.jsonApiSerializer;
+
     for (var prop in options) {
       registry.register('model:' + prop, options[prop]);
     }
@@ -82,7 +99,7 @@
     registry.optionsForType('adapter', { singleton: false });
 
     registry.register('serializer:-default', DS.JSONSerializer);
-    registry.register('serializer:-json-api', DS.JSONAPISerializer);
+    registry.register('serializer:-json-api', jsonApiSerializer);
     registry.register('serializer:-rest', DS.RESTSerializer);
     registry.register('adapter:-json-api', DS.JSONAPIAdapter);
     registry.register('adapter:-rest', DS.RESTAdapter);
@@ -125,7 +142,6 @@
       return this._super(attributeType, true) || transforms[attributeType];
     };
     DS.JSONSerializer.reopen({ transformFor: transformFor });
-    DS.JSONAPISerializer.reopen({ transformFor: transformFor });
 
   });
 

@@ -291,5 +291,20 @@ export default Serializer.extend({
       var transform = this.transformFor(type);
       hash[key] = transform.deserialize(hash[key]);
     }, this);
+  },
+
+  // HELPERS
+
+  /**
+   @method transformFor
+   @private
+   @param {String} attributeType
+   @param {Boolean} skipAssertion
+   @return {DS.Transform} transform
+  */
+  transformFor: function(attributeType, skipAssertion) {
+    var transform = this.container.lookup('transform:' + attributeType);
+    Ember.assert("Unable to find transform for '" + attributeType + "'", skipAssertion || !!transform);
+    return transform;
   }
 });
