@@ -1,3 +1,5 @@
+import snapshot from '../../ember-data/utils/snapshot';
+
 var SuperVillain, EvilMinion, YellowMinion, DoomsdayDevice, MediocreVillain, env;
 var run = Ember.run;
 
@@ -53,7 +55,7 @@ test("serialize polymorphic", function() {
     ray = env.store.createRecord(DoomsdayDevice, { evilMinion: tom, name: "DeathRay" });
   });
 
-  var json = env.amsSerializer.serialize(ray._createSnapshot());
+  var json = env.amsSerializer.serialize(snapshot(ray));
 
   deepEqual(json, {
     name: "DeathRay",
@@ -70,7 +72,7 @@ test("serialize polymorphic when type key is not camelized", function() {
     ray = env.store.createRecord(DoomsdayDevice, { evilMinion: tom, name: "DeathRay" });
   });
 
-  var json = env.amsSerializer.serialize(ray._createSnapshot());
+  var json = env.amsSerializer.serialize(snapshot(ray));
 
   deepEqual(json["evil_minion_type"], "EvilMinions::YellowMinion");
 });
