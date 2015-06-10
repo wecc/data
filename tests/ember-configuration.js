@@ -99,6 +99,11 @@
 
     registry.register('adapter:-rest', DS.RESTAdapter);
 
+    if (Ember.FEATURES.isEnabled('ds-new-serializer-api')) {
+      registry.register('adapter:-json-api', DS.JSONAPIAdapter);
+      registry.register('serializer:-json-api', DS.JSONAPISerializer.extend({ isNewSerializerAPI: true }));
+    }
+
     registry.injection('serializer', 'store', 'store:main');
 
     env.serializer = container.lookup('serializer:-default');

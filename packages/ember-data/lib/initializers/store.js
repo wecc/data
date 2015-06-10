@@ -1,5 +1,5 @@
-import {JSONSerializer, RESTSerializer} from "ember-data/serializers";
-import {RESTAdapter} from "ember-data/adapters";
+import { JSONAPISerializer, JSONSerializer, RESTSerializer } from "ember-data/serializers";
+import { JSONAPIAdapter, RESTAdapter } from "ember-data/adapters";
 import ContainerProxy from "ember-data/system/container-proxy";
 
 /**
@@ -37,4 +37,9 @@ export default function initializeStore(registry, application) {
   registry.register('serializer:-default', JSONSerializer);
   registry.register('serializer:-rest', RESTSerializer);
   registry.register('adapter:-rest', RESTAdapter);
+
+  if (Ember.FEATURES.isEnabled('ds-new-serializer-api')) {
+    registry.register('adapter:-json-api', JSONAPIAdapter);
+    registry.register('serializer:-json-api', JSONAPISerializer);
+  }
 }
