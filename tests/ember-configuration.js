@@ -144,6 +144,14 @@
       }
     });
 
+    if (Ember.FEATURES.isEnabled('ds-new-serializer-api')) {
+      DS.JSONAPISerializer.reopen({
+        _transformFor: function(attributeType) {
+          return this._super(attributeType, true) || transforms[attributeType];
+        }
+      });
+    }
+
   });
 
   // Generate the jQuery expando on window ahead of time
