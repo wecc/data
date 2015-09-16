@@ -104,15 +104,48 @@ const JSONAPISerializer = JSONSerializer.extend({
   */
   _normalizeDocumentHelper: function(documentHash) {
 
+    let documentData = null;
+    let documentIncluded = [];
+
     if (Ember.typeOf(documentHash.data) === 'object') {
-      documentHash.data = this._normalizeResourceHelper(documentHash.data);
+      let { data, included } = this._normalizeResourceHelper(documentHash.data);
+
+      documentData = data;
+
+      if (included) {
+        included = included.filter((item) => item);
+        documentIncluded.push(...included);
+      }
     } else if (Ember.typeOf(documentHash.data) === 'array') {
-      documentHash.data = documentHash.data.map(this._normalizeResourceHelper, this);
+      documentData = documentHash.data.map((item) => {
+        let { data, included } = this._normalizeResourceHelper(item);
+
+        if (included) {
+          included = included.filter((item) => item);
+          documentIncluded.push(...included);
+        }
+
+        return data;
+      });
     }
 
     if (Ember.typeOf(documentHash.included) === 'array') {
-      documentHash.included = documentHash.included.map(this._normalizeResourceHelper, this);
+      documentHash.included.forEach((item) => {
+        let { data, included } = this._normalizeResourceHelper(item);
+
+        if (data) {
+          documentIncluded.push(data);
+        }
+
+        if (included) {
+          included = included.filter((item) => item);
+          documentIncluded.push(...included);
+        }
+      });
     }
+
+    documentHash.data = documentData;
+    documentHash.included = documentIncluded;
 
     return documentHash;
   },
@@ -142,13 +175,12 @@ const JSONAPISerializer = JSONSerializer.extend({
       Ember.warn(this.warnMessageNoModelForType(modelName, resourceHash.type), false, {
         id: 'ds.serializer.model-for-type-missing'
       });
-      return null;
+      return { data: null, included: [] };
     }
 
     let modelClass = this.store.modelFor(modelName);
     let serializer = this.store.serializerFor(modelName);
-    let { data } = serializer.normalize(modelClass, resourceHash);
-    return data;
+    return serializer.normalize(modelClass, resourceHash);
   },
 
   /**
