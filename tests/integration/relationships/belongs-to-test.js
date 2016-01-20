@@ -1068,6 +1068,53 @@ test("Local data should take precedence over related link", function(assert) {
   });
 });
 
+test("Local included data should take precedence over related link", function(assert) {
+  assert.expect(1);
+
+  Author.reopen({
+    books: DS.hasMany('book', { async: true })
+  });
+
+  Book.reopen({
+    author: DS.belongsTo('author', { async: true })
+  });
+
+  env.adapter.findBelongsTo = function(store, snapshot, url, relationship) {
+    assert.ok(false, "The adapter's findBelongsTo method should not be called");
+  };
+
+  run(function() {
+    let author = env.store.push({
+      data: {
+        type: 'author',
+        id: '1',
+        attributes: {
+          name: 'author name'
+        },
+        relationships: {
+          books: {
+            data: [{ type: 'book', id: '2' }]
+          }
+        }
+      },
+      included: [{
+        type: 'book',
+        id: '2',
+        relationships: {
+          author: {
+            links: {
+              related: 'author'
+            }
+          }
+        }
+      }]
+    });
+    author.get('books').then((books) => {
+      assert.equal(books.get('firstObject.author.name'), 'author name', 'author name is correct');
+    });
+  });
+});
+
 test("Updated related link should take precedence over local data", function(assert) {
   assert.expect(3);
 
